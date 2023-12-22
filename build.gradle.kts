@@ -14,11 +14,17 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2023.1.5")
-    type.set("IC") // Target IDE Platform
+    version.set("2022.3.2")
+    type.set("PY") // Target IDE Platform
 
-    plugins.set(listOf(/* Plugin Dependencies */))
+    plugins.set(listOf("Pythonid"))
+    downloadSources.set(false)
 }
+
+dependencies {
+    implementation("org.json:json:20210307")
+}
+
 
 tasks {
     // Set the JVM compatibility versions
@@ -31,7 +37,7 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("231")
+        sinceBuild.set("213")
         untilBuild.set("241.*")
     }
 
