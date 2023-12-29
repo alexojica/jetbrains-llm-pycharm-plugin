@@ -6,3 +6,5 @@ pluginManagement {
 }
 
 rootProject.name = "jetbrains-llm-pycharm-plugin"
+include("src:main:test")
+findProject(":src:main:test")?.name = "test"

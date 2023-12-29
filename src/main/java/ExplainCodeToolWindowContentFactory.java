@@ -27,6 +27,11 @@ public class ExplainCodeToolWindowContentFactory {
     private final JTextArea explanationArea;
     private JButton apiKeyButton;
 
+    /**
+     * Constructs an instance of ExplainCodeToolWindowContentFactory.
+     *
+     * @param project The Project associated with the content.
+     */
     public ExplainCodeToolWindowContentFactory(Project project) {
         this.project = project;
         this.explanationArea = new JTextArea();
@@ -36,21 +41,30 @@ public class ExplainCodeToolWindowContentFactory {
         initializeApiKeyButton();
     }
 
+    /**
+     * Initializes the components for the explanation area and code editor.
+     */
     private void initializeComponents() {
         explanationArea.setEditable(false);
         explanationArea.setLineWrap(true);
         explanationArea.setWrapStyleWord(true);
-        explanationArea.setFont(new Font("Arial", Font.PLAIN, 16)); // Set a better font for explanation
-        explanationArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add some padding
-        explanationArea.setBackground(Gray._43); // Dark background
-        explanationArea.setForeground(new Color(169, 183, 198)); // Light font color for readability
+        explanationArea.setFont(new Font("Arial", Font.PLAIN, 16));
+        explanationArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        explanationArea.setBackground(Gray._43);
+        explanationArea.setForeground(new Color(169, 183, 198));
     }
 
+    /**
+     * Initializes the API key update button.
+     */
     private void initializeApiKeyButton() {
         apiKeyButton = new JButton("Update API Key");
         apiKeyButton.addActionListener(e -> promptAndUpdateApiKey());
     }
 
+    /**
+     * Prompts the user to enter and save a new API key.
+     */
     private void promptAndUpdateApiKey() {
         String newApiKey = JOptionPane.showInputDialog("Enter new OpenAI API Key:");
         if (newApiKey != null && !newApiKey.trim().isEmpty()) {
@@ -59,88 +73,102 @@ public class ExplainCodeToolWindowContentFactory {
         }
     }
 
+    /**
+     * Saves the provided API key securely.
+     *
+     * @param apiKey The new API key to be saved.
+     */
     private void saveApiKey(String apiKey) {
         CredentialAttributes attributes = new CredentialAttributes(ChatGPTApiClient.getServiceName());
         PasswordSafe.getInstance().setPassword(attributes, apiKey);
     }
 
+    /**
+     * Creates a code editor for displaying and editing code.
+     *
+     * @return The created code editor.
+     */
     private EditorEx createCodeEditor() {
         EditorFactory editorFactory = EditorFactory.getInstance();
         Document document = editorFactory.createDocument("");
         EditorEx editor = (EditorEx) editorFactory.createViewer(document, project);
         editor.setEmbeddedIntoDialogWrapper(true);
 
-        // Apply a border to the editor to visually distinguish it
         editor.getComponent().setBorder(BorderFactory.createLineBorder(JBColor.GRAY, 1));
 
         EditorSettings settings = editor.getSettings();
         settings.setLineNumbersShown(true);
 
-        // Apply the default editor scheme for colors and fonts
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         editor.setColorsScheme(scheme);
-        editor.setBackgroundColor(scheme.getDefaultBackground()); // Ensure background matches the theme
+        editor.setBackgroundColor(scheme.getDefaultBackground());
 
         return editor;
     }
 
+    /**
+     * Creates the content for the ExplainCode tool window.
+     *
+     * @return The created content for the tool window.
+     */
     public Content createContent() {
-        // Main panel to contain the code editor and explanation area
         JBSplitter splitter = getJbSplitter();
 
-        // Create a panel for the API key button
         JPanel buttonPanel = new JPanel(new BorderLayout());
-        buttonPanel.add(apiKeyButton, BorderLayout.EAST); // Position the button to the right
+        buttonPanel.add(apiKeyButton, BorderLayout.EAST);
 
         // Main container panel
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(splitter, BorderLayout.CENTER);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH); // Add the button panel at the bottom
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Create and return content for the tool window
         ContentFactory contentFactory = ContentFactory.getInstance();
         return contentFactory.createContent(mainPanel, "", false);
     }
 
+
     @NotNull
     private JBSplitter getJbSplitter() {
-        JBSplitter splitter = new JBSplitter(true, 0.5f); // Create a splitter with initial proportion
+        JBSplitter splitter = new JBSplitter(true, 0.5f);
 
-        // Add the code editor to the top of the splitter
         JScrollPane codeScrollPane = new JBScrollPane(codeEditor.getComponent());
         splitter.setFirstComponent(codeScrollPane);
 
-        // Explanation area inside a scroll pane
         JScrollPane explanationScrollPane = new JBScrollPane(explanationArea);
         splitter.setSecondComponent(explanationScrollPane);
         return splitter;
     }
 
-
+    /**
+     * Updates the code editor with the provided code and sets the syntax highlighter based on the language.
+     *
+     * @param code     The code to be displayed in the editor.
+     * @param language The language associated with the code.
+     */
     public void updateCode(String code, Language language) {
-        // Get the file type for the provided language extension
         FileType fileType = language.getAssociatedFileType();
-        // Access the document directly from the editor
         Document document = codeEditor.getDocument();
 
-        // Use the document to set the new text
         WriteCommandAction.runWriteCommandAction(project, () -> document.replaceString(0, document.getTextLength(), code));
 
-        // Set the syntax highlighter based on the language
         EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
         codeEditor.setHighlighter(highlighter);
     }
 
-
+    /**
+     * Updates the explanation text displayed in the explanation area.
+     *
+     * @param explanation The explanation to be displayed.
+     */
     public void updateExplanation(String explanation) {
         explanationArea.setText(explanation);
     }
 
-    // Make sure to dispose of the editor when it's no longer needed
-    public void dispose() {
-        EditorFactory.getInstance().releaseEditor(codeEditor);
-    }
-
+    /**
+     * Gets the text content of the explanation area.
+     *
+     * @return The text content of the explanation area.
+     */
     public String getExplanationText() {
         return explanationArea.getText();
     }

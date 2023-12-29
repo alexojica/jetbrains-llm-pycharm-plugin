@@ -24,8 +24,8 @@ public class CodeCompressor {
             }
         }
 
-        // Apply a correction factor to adjust the total count (e.g., reducing by 10%)
-        double correctionFactor = 1.11; // Adjust this factor based on empirical observations
+        // Apply a correction factor to adjust the total count (reducing by 10%)
+        double correctionFactor = 1.11;
         tokenCount = (int) Math.ceil(tokenCount * correctionFactor);
 
         return tokenCount;

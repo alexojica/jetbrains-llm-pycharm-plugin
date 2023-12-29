@@ -22,7 +22,10 @@ intellij {
 }
 
 dependencies {
-    implementation("org.json:json:20210307")
+    implementation("org.json:json:20231013")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testImplementation("org.mockito:mockito-core:5.8.0")
 }
 
 
@@ -49,5 +52,9 @@ tasks {
 
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
+    }
+
+    test{
+        useJUnitPlatform()
     }
 }

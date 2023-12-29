@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Objects;
 
 public class ExplainCodeAction extends AnAction {
     private static final int MAX_TOKEN_LIMIT = 7000;
@@ -22,7 +21,14 @@ public class ExplainCodeAction extends AnAction {
     private final TokenTracker tokenTracker = new TokenTracker();
     private static final int MAX_WAIT_TIME_SECONDS = 10;
 
+    public ExplainCodeAction() {
+    }
 
+    /**
+     * Performs the action when triggered, explaining the selected Python function's code and displaying the explanation in a tool window.
+     *
+     * @param e AnActionEvent representing the event.
+     */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -42,12 +48,18 @@ public class ExplainCodeAction extends AnAction {
             ExplainCodeToolWindowContentFactory contentFactory = project.getService(ExplainCodeToolWindowContentFactory.class);
             if (contentFactory == null) return;
 
-            contentFactory.updateCode(selectedFunction.getText(), Objects.requireNonNull(Language.findLanguageByID("Python")));
+            contentFactory.updateCode(selectedFunction.getText(), Language.findLanguageByID("Python"));
 
             fetchExplanationAsync(selectedFunction, contentFactory);
         }
     }
 
+    /**
+     * Fetches the explanation asynchronously for the given Python function and updates the tool window content.
+     *
+     * @param selectedFunction The selected Python function.
+     * @param contentFactory   The ExplainCodeToolWindowContentFactory for updating the content.
+     */
     private void fetchExplanationAsync(PyFunction selectedFunction, ExplainCodeToolWindowContentFactory contentFactory) {
         SwingUtilities.invokeLater(() -> contentFactory.updateExplanation("Loading"));
 
@@ -63,6 +75,12 @@ public class ExplainCodeAction extends AnAction {
         });
     }
 
+    /**
+     * Retrieves the response from the ChatGPT Language Model for the given Python function.
+     *
+     * @param function The Python function for which an explanation is requested.
+     * @return The explanation as a String.
+     */
     private String getResponseFromLLM(PyFunction function) {
         String context = CodeParsingHelper.prepareFunctionContext(function);
         context = CodeCompressor.compressCode(context);
@@ -80,7 +98,7 @@ public class ExplainCodeAction extends AnAction {
                     try {
                         summaryBuilder.append(sendRequestToOpenAI(contextBuilder.toString()));
                     } catch (IOException | InterruptedException e) {
-                        return "Error: " + e.getMessage() + "\n" + CodeCompressor.estimateTokenCount(contextBuilder.toString()) + "\n" + tokens + "\n" + summaryBuilder;
+                        return "Error: " + e.getMessage();
                     }
                     contextBuilder = new StringBuilder();
                     contextBuilder.append(CONTEXT_BATCH_PROMPT);
@@ -91,7 +109,7 @@ public class ExplainCodeAction extends AnAction {
                 summaryBuilder.append(sendRequestToOpenAI(contextBuilder.toString()));
                 return sendRequestToOpenAI(summaryBuilder.toString());
             } catch (IOException | InterruptedException e) {
-                return "Error: " + e.getMessage()+ "\n" + CodeCompressor.estimateTokenCount(contextBuilder.toString()) + "\n" + tokens + "\n" + summaryBuilder;
+                return "Error: " + e.getMessage();
             }
         } else {
             try {
@@ -102,6 +120,14 @@ public class ExplainCodeAction extends AnAction {
         }
     }
 
+    /**
+     * Sends a request to the OpenAI API to get an explanation for the given code.
+     *
+     * @param request The code for which an explanation is requested.
+     * @return The explanation as a String.
+     * @throws IOException          If an I/O error occurs during the HTTP request.
+     * @throws InterruptedException If the HTTP request is interrupted.
+     */
     private String sendRequestToOpenAI(String request) throws IOException, InterruptedException {
         int estimatedTokens = CodeCompressor.estimateTokenCount(request);
         int waitTime = tokenTracker.getRemainingWaitTime();
@@ -121,6 +147,12 @@ public class ExplainCodeAction extends AnAction {
         return ChatGPTApiClient.getExplanationFromLLM(request, tokenTracker);
     }
 
+    /**
+     * Retrieves a loading timer for updating the tool window content while loading.
+     *
+     * @param contentFactory The ExplainCodeToolWindowContentFactory for updating the content.
+     * @return A Timer instance for updating the loading indicator.
+     */
     @NotNull
     private static Timer getLoadingTimer(ExplainCodeToolWindowContentFactory contentFactory) {
         Timer loadingTimer = new Timer(300, null);
